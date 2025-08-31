@@ -1,0 +1,49 @@
+{
+  "name": "@robilabs/lexa",
+  "version": "1.1.0",
+  "description": "JavaScript SDK for Lexa, the AI Model by Robi Labs. Build with powerful chat, text, and multimodal APIs.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "lexa",
+    "ai",
+    "sdk",
+    "chat",
+    "completion",
+    "language-model",
+    "multimodal"
+  ],
+  "author": "Robi Labs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Robi-Labs/lexa-js-sdk.git"
+  },
+  "homepage": "https://lexa.chat",
+  "bugs": {
+    "url": "https://github.com/Robi-Labs/lexa-js-sdk/issues"
+  },
+  "dependencies": {
+    "@ai-sdk/provider": "^2.0.0",
+    "@ai-sdk/provider-utils": "^3.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@ai-sdk/provider": "^2.0.0"
+  }
+}
