@@ -1,5 +1,5 @@
 {
-  "name": "@robilabs/lexa",
+  "name": "@robi-labs/lexa",
   "version": "1.2.0",
   "description": "JavaScript SDK for Lexa, the AI Model by Robi Labs. Build with powerful chat, text, and multimodal APIs.",
   "main": "dist/index.js",
