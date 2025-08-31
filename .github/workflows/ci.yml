@@ -23,12 +23,10 @@ jobs:
         run: npm ci
         
       - name: Build package
-        run: npm run build || echo "Build completed with TypeScript warnings (expected)"
-        continue-on-error: true
+        run: npm run build
         
       - name: Check for TypeScript errors
-        run: npx tsc --noEmit || echo "TypeScript errors found (expected for this version)"
-        continue-on-error: true
+        run: npx tsc --noEmit
         
       - name: Run tests (if available)
         run: npm test || echo "No tests configured"
