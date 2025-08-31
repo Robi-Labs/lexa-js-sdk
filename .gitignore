@@ -15,6 +15,9 @@ build/
 .env.test.local
 .env.production.local
 
+# NPM configuration (keep .npmrc for GitHub Packages)
+!.npmrc
+
 # IDE
 .vscode/
 .idea/

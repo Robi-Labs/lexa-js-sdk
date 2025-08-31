@@ -35,7 +35,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js
+      - name: Setup Node.js for NPM
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -51,3 +51,27 @@ jobs:
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+  publish-github:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js for GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build package
+        run: npm run build
+        
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}

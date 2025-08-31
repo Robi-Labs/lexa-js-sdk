@@ -31,6 +31,9 @@
     "type": "git",
     "url": "git+https://github.com/Robi-Labs/lexa-js-sdk.git"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "homepage": "https://lexa.chat",
   "bugs": {
     "url": "https://github.com/Robi-Labs/lexa-js-sdk/issues"
