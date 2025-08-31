@@ -7,11 +7,8 @@ import {
   LanguageModelV2StreamPart,
   LanguageModelV2Usage,
   LanguageModelV2CallWarning,
-} from '@ai-sdk/provider';
-import {
   APICallError,
-  TooManyRequestsError,
-} from '@ai-sdk/provider-utils';
+} from '@ai-sdk/provider';
 import {
   LexaProviderConfig,
   LexaProviderSettings,
@@ -21,15 +18,27 @@ import {
   LexaTool,
 } from './types';
 
+// Custom error class for rate limiting
+class TooManyRequestsError extends Error {
+  constructor(public retryAfter?: number) {
+    super('Rate limited by Lexa API');
+    this.name = 'TooManyRequestsError';
+  }
+}
+
 export class LexaLanguageModel implements LanguageModelV2 {
   readonly specificationVersion = 'v2';
   readonly provider = 'lexa';
 
+  readonly modelId: string;
+
   constructor(
-    private readonly modelId: string,
+    modelId: string,
     private readonly settings: LexaProviderSettings,
     private readonly config: LexaProviderConfig,
-  ) {}
+  ) {
+    this.modelId = modelId;
+  }
 
   get providerMetadata() {
     return {
@@ -40,13 +49,13 @@ export class LexaLanguageModel implements LanguageModelV2 {
     };
   }
 
-  async doGenerate(options: LanguageModelV2CallOptions): Promise<{
-    content: LanguageModelV2Content[];
-    finishReason: LanguageModelV2FinishReason;
-    usage: LanguageModelV2Usage;
-    providerMetadata?: Record<string, Record<string, unknown>>;
-    warnings: LanguageModelV2CallWarning[];
-  }> {
+  get supportedUrls() {
+    return {
+      'image/*': [/^https:\/\/.*\.(png|jpg|jpeg|gif|webp)$/i],
+    };
+  }
+
+  async doGenerate(options: LanguageModelV2CallOptions): Promise<any> {
     const { args, warnings } = this.getArgs(options);
 
     try {
@@ -103,7 +112,7 @@ export class LexaLanguageModel implements LanguageModelV2 {
           totalTokens: responseData.usage?.total_tokens,
         },
         warnings,
-      } as any; // Type assertion to bypass complex type compatibility
+      };
     } catch (error) {
       this.handleError(error);
     }
@@ -144,7 +153,7 @@ export class LexaLanguageModel implements LanguageModelV2 {
   }
 
   // Convert AI SDK messages to provider format
-  private convertToProviderMessages(prompt: LanguageModelV2Prompt): LexaMessage[] {
+  private convertToProviderMessages(prompt: LanguageModelV2Prompt): any[] {
     return prompt.map((message) => {
       switch (message.role) {
         case 'system':
@@ -160,7 +169,7 @@ export class LexaLanguageModel implements LanguageModelV2 {
               if (part.type === 'text') {
                 return { type: 'text', text: part.text };
               } else if (part.type === 'file') {
-                return { type: 'image_url', image_url: { url: part.data } };
+                return { type: 'image_url', image_url: { url: String(part.data) } };
               } else {
                 throw new Error(`Unsupported part type: ${(part as any).type}`);
               }
@@ -253,7 +262,7 @@ export class LexaLanguageModel implements LanguageModelV2 {
     }
   }
 
-  private createParser(): TransformStream<string, LexaStreamChunk> {
+  private createParser(): TransformStream<string, any> {
     return new TransformStream({
       transform(chunk, controller) {
         const lines = chunk.split('\n');
@@ -276,20 +285,23 @@ export class LexaLanguageModel implements LanguageModelV2 {
     });
   }
 
-  private createTransformer(warnings: LanguageModelV2CallWarning[]): TransformStream<LexaStreamChunk, LanguageModelV2StreamPart> {
+  private createTransformer(warnings: LanguageModelV2CallWarning[]): TransformStream<any, any> {
     return new TransformStream({
       transform(chunk, controller) {
         if (chunk.type === 'finish') {
           controller.enqueue({
             type: 'finish',
-            usage: chunk.usage,
+            usage: chunk.usage || { inputTokens: 0, outputTokens: 0, totalTokens: 0 },
             warnings,
-          });
+          } as any);
         } else if (chunk.choices?.[0]?.delta?.content) {
-          controller.enqueue({
-            type: 'text-delta',
-            delta: chunk.choices[0].delta.content,
-          });
+          const content = chunk.choices[0].delta.content;
+          if (typeof content === 'string') {
+            controller.enqueue({
+              type: 'text-delta',
+              delta: content,
+            } as any);
+          }
         }
       },
     });
@@ -299,17 +311,16 @@ export class LexaLanguageModel implements LanguageModelV2 {
     if (error instanceof Response) {
       if (error.status === 429) {
         const retryAfter = error.headers.get('retry-after');
-        throw new TooManyRequestsError({
-          message: 'Rate limited by Lexa API',
-          retryAfter: retryAfter ? parseInt(retryAfter, 10) : undefined,
-        });
+        throw new TooManyRequestsError(retryAfter ? parseInt(retryAfter, 10) : undefined);
       }
 
       throw new APICallError({
         message: `Lexa API error: ${error.status} ${error.statusText}`,
+        url: error.url || '',
+        requestBodyValues: {},
         statusCode: error.status,
         responseHeaders: Object.fromEntries(error.headers.entries()),
-        responseBody: error.body,
+        responseBody: '',
         cause: error,
       });
     }
@@ -320,6 +331,8 @@ export class LexaLanguageModel implements LanguageModelV2 {
 
     throw new APICallError({
       message: `Unexpected error: ${error.message}`,
+      url: '',
+      requestBodyValues: {},
       cause: error,
     });
   }
