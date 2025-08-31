@@ -76,6 +76,10 @@ jobs:
       - name: Build package
         run: npm run build
         
+      - name: Update package name for GitHub Packages
+        run: |
+          sed -i 's/"@robilabs\/lexa"/"@robi-labs\/lexa"/g' package.json
+        
       - name: Publish to GitHub Packages
         run: npm publish
         env:
