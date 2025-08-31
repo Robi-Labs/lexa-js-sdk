@@ -1,6 +1,6 @@
 {
   "name": "@robilabs/lexa",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "JavaScript SDK for Lexa, the AI Model by Robi Labs. Build with powerful chat, text, and multimodal APIs.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
